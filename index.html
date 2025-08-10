@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GuildGame.io - Strategic Real Estate Test Drive</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Orbitron', monospace;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a237e 100%);
+            color: #00ffff;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .game-container {
+            display: grid;
+            grid-template-columns: 250px 1fr 300px;
+            height: 100vh;
+            gap: 10px;
+            padding: 10px;
+        }
+
+        /* Left Panel - Resources */
+        .resources {
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid #00ffff;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+        }
+
+        .resource-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 15px 0;
+            font-size: 14px;
+        }
+
+        .resource-value {
+            color: #ffeb3b;
+            font-weight: 700;
+        }
+
+        /* Center Panel - Game Grid */
+        .game-grid {
+            background: rgba(0, 0, 0, 0.5);
+            border: 2px solid #00ffff;
+            border-radius: 10px;
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            grid-template-rows: repeat(10, 1fr);
+            gap: 2px;
+            padding: 10px;
+            overflow: hidden;
+        }
+
+        .grid-cell {
+            background: rgba(0, 30, 60, 0.7);
+            border: 1px solid #004d7a;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .grid-cell:hover {
+            background: rgba(0, 100, 200, 0.5);
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+
+        .building {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            text-align: center;
+            padding: 2px;
+            color: white;
+            text-shadow: 0 0 5px rgba(0, 0, 0, 0.8);
+        }
+
+        .power-plant { background: linear-gradient(45deg, #ff5722, #ff9800); }
+        .police-station { background: linear-gradient(45deg, #2196f3, #03a9f4); }
+        .park { background: linear-gradient(45deg, #4caf50, #8bc34a); }
+        .hospital { background: linear-gradient(45deg, #f44336, #e91e63); }
+        .school { background: linear-gradient(45deg, #9c27b0, #673ab7); }
+
+        /* Right Panel - Actions */
+        .actions {
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid #00ffff;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+        }
+
+        .action-btn {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            background: linear-gradient(45deg, #1a237e, #3949ab);
+            border: 2px solid #00ffff;
+            border-radius: 8px;
+            color: #00ffff;
+            font-family: 'Orbitron', monospace;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+        }
+
+        .action-btn:hover {
+            background: linear-gradient(45deg, #3949ab, #5c6bc0);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .action-btn:active {
+            transform: translateY(0);
+        }
+
+        /* Event Popup */
+        .event-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            border: 3px solid #00ffff;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+            z-index: 1000;
+            display: none;
+            text-align: center;
+            max-width: 400px;
+        }
+
+        .event-title {
+            font-size: 24px;
+            font-weight: 900;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+        }
+
+        .event-description {
+            font-size: 14px;
+            margin-bottom: 20px;
+            line-height: 1.4;
+        }
+
+        .close-btn {
+            padding: 10px 20px;
+            background: #00ffff;
+            color: #0a0e27;
+            border: none;
+            border-radius: 5px;
+            font-family: 'Orbitron', monospace;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        /* Header */
+        .game-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px;
+            text-align: center;
+            z-index: 100;
+            border-bottom: 2px solid #00ffff;
+        }
+
+        .game-title {
+            font-size: 28px;
+            font-weight: 900;
+            background: linear-gradient(45deg, #00ffff, #ff00ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+        }
+
+        /* Selected Building */
+        .selected {
+            box-shadow: 0 0 15px rgba(255, 235, 59, 0.8);
+            border: 2px solid #ffeb3b !important;
+        }
+
+        /* Notification */
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #00ffff;
+            border-radius: 8px;
+            padding: 15px;
+            z-index: 1000;
+            display: none;
+            max-width: 300px;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-header">
+        <h1 class="game-title">GUILDGAME.IO</h1>
+    </div>
+
+    <div class="game-container">
+        <!-- Resources Panel -->
+        <div class="resources">
+            <h2>RESOURCES</h2>
+            <div class="resource-item">
+                <span>💰 Money:</span>
+                <span class="resource-value" id="money">$10,000</span>
+            </div>
+            <div class="resource-item">
+                <span>⚡ Energy:</span>
+                <span class="resource-value" id="energy">100 MW</span>
+            </div>
+            <div class="resource-item">
+                <span>😊 Happiness:</span>
+                <span class="resource-value" id="happiness">50%</span>
+            </div>
+            <div class="resource-item">
+                <span>🔬 Innovation:</span>
+                <span class="resource-value" id="innovation">0 pts</span>
+            </div>
+        </div>
+
+        <!-- Game Grid -->
+        <div class="game-grid" id="gameGrid">
+            <!-- Grid cells will be generated by JavaScript -->
+        </div>
+
+        <!-- Actions Panel -->
+        <div class="actions">
+            <h2>BUILDINGS</h2>
+            <button class="action-btn" onclick="selectBuilding('power-plant')">
+                Power Plant<br><small>Cost: $5,000 | Energy: +100</small>
+            </button>
+            <button class="action-btn" onclick="selectBuilding('police-station')">
+                Police Station<br><small>Cost: $8,000 | Happiness: +15</small>
+            </button>
+            <button class="action-btn" onclick="selectBuilding('park')">
+                Park<br><small>Cost: $2,000 | Happiness: +10</small>
+            </button>
+            <button class="action-btn" onclick="selectBuilding('hospital')">
+                Hospital<br><small>Cost: $12,000 | Happiness: +20</small>
+            </button>
+            <button class="action-btn" onclick="selectBuilding('school')">
+                School<br><small>Cost: $6,000 | Innovation: +5</small>
+            </button>
+            
+            <h2 style="margin-top: 30px;">ACTIONS</h2>
+            <button class="action-btn" onclick="triggerEvent('market-boom')">
+                Trigger Market Boom<br><small>Money +25%</small>
+            </button>
+            <button class="action-btn" onclick="triggerEvent('market-bust')">
+                Trigger Market Bust<br><small>Money -30%</small>
+            </button>
+        </div>
+    </div>
+
+    <!-- Event Popup -->
+    <div class="event-popup" id="eventPopup">
+        <div class="event-title" id="eventTitle"></div>
+        <div class="event-description" id="eventDescription"></div>
+        <button class="close-btn" onclick="closeEventPopup()">CLOSE</button>
+    </div>
+
+    <!-- Notification -->
+    <div class="notification" id="notification"></div>
+
+    <script>
+        // Game State
+        const gameState = {
+            resources: {
+                money: 10000,
+                energy: 100,
+                happiness: 50,
+                innovation: 0
+            },
+            selectedBuilding: null,
+            grid: Array(100).fill(null),
+            buildings: {
+                'power-plant': { cost: 5000, energy: 100, happiness: 0, innovation: 0 },
+                'police-station': { cost: 8000, energy: 0, happiness: 15, innovation: 0 },
+                'park': { cost: 2000, energy: 0, happiness: 10, innovation: 0 },
+                'hospital': { cost: 12000, energy: 0, happiness: 20, innovation: 0 },
+                'school': { cost: 6000, energy: 0, happiness: 0, innovation: 5 }
+            }
+        };
+
+        // Initialize Game Grid
+        function initializeGrid() {
+            const grid = document.getElementById('gameGrid');
+            grid.innerHTML = '';
+            
+            for (let i = 0; i < 100; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'grid-cell';
+                cell.dataset.index = i;
+                cell.onclick = () => placeBuilding(i);
+                grid.appendChild(cell);
+            }
+        }
+
+        // Select Building
+        function selectBuilding(type) {
+            gameState.selectedBuilding = type;
+            document.querySelectorAll('.action-btn').forEach(btn => btn.classList.remove('selected'));
+            event.target.classList.add('selected');
+            showNotification(`Selected: ${type.replace('-', ' ').toUpperCase()}`);
+        }
+
+        // Place Building
+        function placeBuilding(index) {
+            if (!gameState.selectedBuilding) {
+                showNotification('Select a building first!');
+                return;
+            }
+            
+            if (gameState.grid[index]) {
+                showNotification('Cell already occupied!');
+                return;
+            }
+            
+            const building = gameState.buildings[gameState.selectedBuilding];
+            
+            if (gameState.resources.money < building.cost) {
+                showNotification('Not enough money!');
+                return;
+            }
+            
+            // Place building
+            gameState.grid[index] = gameState.selectedBuilding;
+            gameState.resources.money -= building.cost;
+            
+            // Apply building effects
+            gameState.resources.energy += building.energy;
+            gameState.resources.happiness += building.happiness;
+            gameState.resources.innovation += building.innovation;
+            
+            // Update UI
+            updateGrid();
+            updateResources();
+            showNotification(`${gameState.selectedBuilding.replace('-', ' ').toUpperCase()} built!`);
+            
+            // Audio feedback (simulated)
+            console.log(`Audio: ${gameState.selectedBuilding}_placement.wav`);
+        }
+
+        // Update Grid Display
+        function updateGrid() {
+            const cells = document.querySelectorAll('.grid-cell');
+            cells.forEach((cell, index) => {
+                const buildingType = gameState.grid[index];
+                if (buildingType) {
+                    cell.innerHTML = `<div class="building ${buildingType}">${buildingType.replace('-', ' ')}</div>`;
+                } else {
+                    cell.innerHTML = '';
+                }
+            });
+        }
+
+        // Update Resources Display
+        function updateResources() {
+            document.getElementById('money').textContent = `$${gameState.resources.money.toLocaleString()}`;
+            document.getElementById('energy').textContent = `${gameState.resources.energy} MW`;
+            document.getElementById('happiness').textContent = `${gameState.resources.happiness}%`;
+            document.getElementById('innovation').textContent = `${gameState.resources.innovation} pts`;
+        }
+
+        // Trigger Event
+        function triggerEvent(eventType) {
+            let title, description, effects;
+            
+            if (eventType === 'market-boom') {
+                title = 'MARKET BOOM';
+                description = 'The economy is thriving! Investments are paying off.';
+                effects = { money: 0.25 };
+            } else if (eventType === 'market-bust') {
+                title = 'MARKET BUST';
+                description = 'Economic downturn! Financial markets are crashing.';
+                effects = { money: -0.30 };
+            }
+            
+            // Apply event effects
+            if (effects.money) {
+                gameState.resources.money = Math.round(gameState.resources.money * (1 + effects.money));
+            }
+            
+            // Show event popup
+            showEventPopup(title, description);
+            updateResources();
+            
+            // Audio feedback (simulated)
+            console.log(`Audio: ${eventType}.wav`);
+        }
+
+        // Show Event Popup
+        function showEventPopup(title, description) {
+            document.getElementById('eventTitle').textContent = title;
+            document.getElementById('eventDescription').textContent = description;
+            document.getElementById('eventPopup').style.display = 'block';
+        }
+
+        // Close Event Popup
+        function closeEventPopup() {
+            document.getElementById('eventPopup').style.display = 'none';
+        }
+
+        // Show Notification
+        function showNotification(message) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.style.display = 'block';
+            
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
+        }
+
+        // Initialize Game
+        window.onload = function() {
+            initializeGrid();
+            updateResources();
+            showNotification('Welcome to GuildGame.io! Start building your city.');
+        };
+    </script>
+</body>
+</html>
